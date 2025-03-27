@@ -1,0 +1,29 @@
+[project]
+name = "minitorch"
+version = "0.1.0"
+description = "An implementation of torch based solely on numpy"
+authors = [
+    {name = "amaudruz",email = "louis.amaudruz@nexthink.com"}
+]
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "numpy (>=2.2.4,<3.0.0)"
+]
+packages = [{include = "minitorch", from = "src"}]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.11.2"
+mypy = "^1.15.0"
+black = "^25.1.0"
+torch = "^2.6.0"
+pytest = "^8.3.5"
+
+[tool.poe.tasks.test]
+help = "Run pytest on the code base"
+cmd  = "pytest tests"
