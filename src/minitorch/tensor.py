@@ -1,4 +1,5 @@
 import numpy as np
+from torch import relu
 
 
 class Tensor:
@@ -25,14 +26,14 @@ class Tensor:
         return MatMul().forward(self, other)
 
     def __add__(self, other: "Tensor") -> "Tensor":
-        from minitorch.operations import TwoDimenstionalAdd
+        from minitorch.operations import TwoDimensionalAdd
 
-        return TwoDimenstionalAdd().forward(self, other)
+        return TwoDimensionalAdd().forward(self, other)
 
     def __sub__(self, other: "Tensor") -> "Tensor":
-        from minitorch.operations import TwoDimenstionalSub
+        from minitorch.operations import TwoDimensionalSub
 
-        return TwoDimenstionalSub().forward(self, other)
+        return TwoDimensionalSub().forward(self, other)
 
     def sum(self, dim: int | None = None) -> "Tensor":
         from minitorch.operations import Sum
@@ -48,3 +49,8 @@ class Tensor:
         from minitorch.operations import Square
 
         return Square().forward(self)
+
+    def relu(self) -> "Tensor":
+        from minitorch.operations import ReLU
+
+        return ReLU().forward(self)

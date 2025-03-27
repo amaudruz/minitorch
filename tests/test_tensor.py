@@ -182,5 +182,24 @@ def test_operation_square():
     assert grad_diff < 1e-10
 
 
-if __name__ == "__main__":
-    test_operation_mean()
+def test_operation_relu():
+    data = np.random.randn(10, 5)
+    activation_grad = np.random.randn(10, 5)
+
+    data_minitensor = Tensor(data)
+
+    data_tensor = torch.from_numpy(data).requires_grad_()
+
+    relu_minitensor = data_minitensor.relu()
+    relu_tensor = torch.nn.ReLU().forward(data_tensor)
+    diff = np.abs((relu_minitensor.data.squeeze() - relu_tensor.detach().numpy())).sum()
+    assert diff < 1e-10
+
+    loss = (relu_tensor * torch.from_numpy(activation_grad)).sum()
+    loss.backward()
+
+    relu_minitensor.grad = activation_grad
+    relu_minitensor.backward()
+
+    grad_diff = np.abs(data_minitensor.grad - data_tensor.grad.numpy()).sum()
+    assert grad_diff < 1e-10

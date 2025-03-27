@@ -27,9 +27,9 @@ class MatMul(Operation):
         return Tensor(self.left.data @ self.right.data, self)
 
     def backward(self, activation_grad: np.ndarray) -> None:
-        assert (self.left is not None) and (self.right is not None), (
-            "Operation must be executed before calling backward on it"
-        )
+        assert (self.left is not None) and (
+            self.right is not None
+        ), "Operation must be executed before calling backward on it"
 
         self.right.grad = self.left.data.transpose() @ activation_grad
         self.left.grad = activation_grad @ self.right.data.transpose()
@@ -41,7 +41,7 @@ class MatMul(Operation):
         self.b = None
 
 
-class TwoDimenstionalAdd(Operation):
+class TwoDimensionalAdd(Operation):
     def __init__(self) -> None:
         self.left: Tensor | None = None
         self.right: Tensor | None = None
@@ -55,9 +55,9 @@ class TwoDimenstionalAdd(Operation):
         return Tensor(self.left.data + self.right.data, self)
 
     def backward(self, activation_grad: np.ndarray) -> None:
-        assert (self.left is not None) and (self.right is not None), (
-            "Operation must be executed before calling backward on it"
-        )
+        assert (self.left is not None) and (
+            self.right is not None
+        ), "Operation must be executed before calling backward on it"
 
         def _get_2d_broadcasting_dims(array_2d: np.ndarray) -> list[int]:
             return [i for i in range(2) if array_2d.shape[i] == 1]
@@ -80,7 +80,7 @@ class TwoDimenstionalAdd(Operation):
         self.b = None
 
 
-class TwoDimenstionalSub(Operation):
+class TwoDimensionalSub(Operation):
     def __init__(self) -> None:
         self.left: Tensor | None = None
         self.right: Tensor | None = None
@@ -94,9 +94,9 @@ class TwoDimenstionalSub(Operation):
         return Tensor(self.left.data - self.right.data, self)
 
     def backward(self, activation_grad: np.ndarray) -> None:
-        assert (self.left is not None) and (self.right is not None), (
-            "Operation must be executed before calling backward on it"
-        )
+        assert (self.left is not None) and (
+            self.right is not None
+        ), "Operation must be executed before calling backward on it"
 
         def _get_2d_broadcasting_dims(array_2d: np.ndarray) -> list[int]:
             return [i for i in range(2) if array_2d.shape[i] == 1]
@@ -136,9 +136,9 @@ class Mean(Operation):
         return Tensor(mean_data, self)
 
     def backward(self, activation_grad: np.ndarray) -> None:
-        assert self.tensor is not None, (
-            "Operation must be executed before calling backward on it"
-        )
+        assert (
+            self.tensor is not None
+        ), "Operation must be executed before calling backward on it"
         assert len(activation_grad.shape) == 2
 
         scale = (
@@ -167,9 +167,9 @@ class Sum(Operation):
         return Tensor(summed_data, self)
 
     def backward(self, activation_grad: np.ndarray) -> None:
-        assert self.tensor is not None, (
-            "Operation must be executed before calling backward on it"
-        )
+        assert (
+            self.tensor is not None
+        ), "Operation must be executed before calling backward on it"
         assert len(activation_grad.shape) == 2
 
         self.tensor.grad = np.ones_like(self.tensor.data) * activation_grad
@@ -192,5 +192,23 @@ class Square(Operation):
     def backward(self, activation_grad: np.ndarray) -> None:
         assert self.tensor is not None
         self.tensor.grad = 2 * self.tensor.data * activation_grad
+        self.tensor.backward()
+        self.tensor = None
+
+
+class ReLU(Operation):
+    def __init__(self) -> None:
+        self.tensor: Tensor | None = None
+
+    def forward(self, *inputs) -> Tensor:
+        (tensor,) = inputs
+        assert isinstance(tensor, Tensor)
+        self.tensor = tensor
+
+        return Tensor(self.tensor.data * (self.tensor.data > 0), self)
+
+    def backward(self, activation_grad: np.ndarray) -> None:
+        assert self.tensor is not None
+        self.tensor.grad = (self.tensor.data > 0) * activation_grad
         self.tensor.backward()
         self.tensor = None
