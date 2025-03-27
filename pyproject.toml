@@ -3,12 +3,13 @@ name = "minitorch"
 version = "0.1.0"
 description = "An implementation of torch based solely on numpy"
 authors = [
-    {name = "amaudruz",email = "louis.amaudruz@nexthink.com"}
+    {name = "amaudruz",email = "amaudruz.louis@gmail.com"}
 ]
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
-    "numpy (>=2.2.4,<3.0.0)"
+    "numpy (>=2.2.4,<3.0.0)",
+    "tqdm (>=4.67.1,<5.0.0)"
 ]
 packages = [{include = "minitorch", from = "src"}]
 
@@ -27,3 +28,22 @@ pytest = "^8.3.5"
 [tool.poe.tasks.test]
 help = "Run pytest on the code base"
 cmd  = "pytest tests"
+
+###### Lint, format, style, types
+
+[tool.poe.tasks.lint]
+help = "Run linting tools on the code base"
+cmd  = "ruff check src tests"
+
+[tool.poe.tasks.format-black]
+help = "Format code with black"
+cmd  = "black src tests"
+
+[tool.poe.tasks.format-ruff]
+help = "Format code with ruff"
+cmd  = "ruff format src tests"
+
+[tool.poe.tasks.format]
+help     = "Run code formating tools"
+sequence = ["format-black", "format-ruff"]
+

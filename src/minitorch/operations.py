@@ -4,7 +4,6 @@ from minitorch.tensor import Tensor
 
 
 class Operation(ABC):
-
     @abstractmethod
     def forward(self, *inputs) -> Tensor:
         pass
@@ -15,7 +14,6 @@ class Operation(ABC):
 
 
 class MatMul(Operation):
-
     def __init__(self) -> None:
         self.left: Tensor | None = None
         self.right: Tensor | None = None
@@ -29,9 +27,9 @@ class MatMul(Operation):
         return Tensor(self.left.data @ self.right.data, self)
 
     def backward(self, activation_grad: np.ndarray) -> None:
-        assert (self.left is not None) and (
-            self.right is not None
-        ), "Operation must be executed before calling backward on it"
+        assert (self.left is not None) and (self.right is not None), (
+            "Operation must be executed before calling backward on it"
+        )
 
         self.right.grad = self.left.data.transpose() @ activation_grad
         self.left.grad = activation_grad @ self.right.data.transpose()
@@ -44,7 +42,6 @@ class MatMul(Operation):
 
 
 class TwoDimenstionalAdd(Operation):
-
     def __init__(self) -> None:
         self.left: Tensor | None = None
         self.right: Tensor | None = None
@@ -58,9 +55,9 @@ class TwoDimenstionalAdd(Operation):
         return Tensor(self.left.data + self.right.data, self)
 
     def backward(self, activation_grad: np.ndarray) -> None:
-        assert (self.left is not None) and (
-            self.right is not None
-        ), "Operation must be executed before calling backward on it"
+        assert (self.left is not None) and (self.right is not None), (
+            "Operation must be executed before calling backward on it"
+        )
 
         def _get_2d_broadcasting_dims(array_2d: np.ndarray) -> list[int]:
             return [i for i in range(2) if array_2d.shape[i] == 1]
@@ -84,7 +81,6 @@ class TwoDimenstionalAdd(Operation):
 
 
 class TwoDimenstionalSub(Operation):
-
     def __init__(self) -> None:
         self.left: Tensor | None = None
         self.right: Tensor | None = None
@@ -98,9 +94,9 @@ class TwoDimenstionalSub(Operation):
         return Tensor(self.left.data - self.right.data, self)
 
     def backward(self, activation_grad: np.ndarray) -> None:
-        assert (self.left is not None) and (
-            self.right is not None
-        ), "Operation must be executed before calling backward on it"
+        assert (self.left is not None) and (self.right is not None), (
+            "Operation must be executed before calling backward on it"
+        )
 
         def _get_2d_broadcasting_dims(array_2d: np.ndarray) -> list[int]:
             return [i for i in range(2) if array_2d.shape[i] == 1]
@@ -123,8 +119,38 @@ class TwoDimenstionalSub(Operation):
         self.b = None
 
 
-class Sum(Operation):
+class Mean(Operation):
+    def __init__(self) -> None:
+        self.tensor: Tensor | None = None
 
+    def forward(self, *inputs) -> Tensor:
+        tensor, dim = inputs
+        assert (dim == 1) or (dim == 0) or (dim is None)
+        assert isinstance(tensor, Tensor)
+        self.tensor, self.dim = tensor, dim
+        mean_data = (
+            self.tensor.data.mean(self.dim, keepdims=True)
+            if self.dim is not None
+            else self.tensor.data.mean()
+        )
+        return Tensor(mean_data, self)
+
+    def backward(self, activation_grad: np.ndarray) -> None:
+        assert self.tensor is not None, (
+            "Operation must be executed before calling backward on it"
+        )
+        assert len(activation_grad.shape) == 2
+
+        scale = (
+            (self.tensor.data.size) if self.dim is None else self.tensor.shape[self.dim]
+        )
+        self.tensor.grad = np.ones_like(self.tensor.data) * activation_grad / scale
+        self.tensor.backward()
+
+        self.tensor = None
+
+
+class Sum(Operation):
     def __init__(self) -> None:
         self.tensor: Tensor | None = None
 
@@ -141,12 +167,30 @@ class Sum(Operation):
         return Tensor(summed_data, self)
 
     def backward(self, activation_grad: np.ndarray) -> None:
-        assert (
-            self.tensor is not None
-        ), "Operation must be executed before calling backward on it"
+        assert self.tensor is not None, (
+            "Operation must be executed before calling backward on it"
+        )
         assert len(activation_grad.shape) == 2
 
         self.tensor.grad = np.ones_like(self.tensor.data) * activation_grad
         self.tensor.backward()
 
+        self.tensor = None
+
+
+class Square(Operation):
+    def __init__(self) -> None:
+        self.tensor: Tensor | None = None
+
+    def forward(self, *inputs) -> Tensor:
+        (tensor,) = inputs
+        assert isinstance(tensor, Tensor)
+        self.tensor = tensor
+
+        return Tensor(np.square(self.tensor.data), self)
+
+    def backward(self, activation_grad: np.ndarray) -> None:
+        assert self.tensor is not None
+        self.tensor.grad = 2 * self.tensor.data * activation_grad
+        self.tensor.backward()
         self.tensor = None

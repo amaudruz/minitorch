@@ -2,13 +2,15 @@ import numpy as np
 
 
 class Tensor:
-
     def __init__(self, data: np.ndarray, operator=None) -> None:
         self.data = data
         self.operator = operator
         self.grad: np.ndarray | None = None
 
     def backward(self) -> None:
+        if all(dim_size == 1 for dim_size in self.shape) and (self.grad is None):
+            assert self.operator
+            return self.operator.backward(np.ones((1, 1)))
         assert self.grad is not None
         if self.operator:
             self.operator.backward(self.grad)
@@ -36,3 +38,13 @@ class Tensor:
         from minitorch.operations import Sum
 
         return Sum().forward(self, dim)
+
+    def mean(self, dim: int | None = None) -> "Tensor":
+        from minitorch.operations import Mean
+
+        return Mean().forward(self, dim)
+
+    def square(self) -> "Tensor":
+        from minitorch.operations import Square
+
+        return Square().forward(self)

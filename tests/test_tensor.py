@@ -4,7 +4,6 @@ import torch
 
 
 def test_operation_matmul():
-
     left = np.random.randn(10, 5)
     right = np.random.randn(5, 8)
     activation_grad = np.random.randn(10, 8)
@@ -34,7 +33,6 @@ def test_operation_matmul():
 
 
 def test_operation_add():
-
     left = np.random.randn(10, 5)
     right = np.random.randn(1, 5)
     activation_grad = np.random.randn(10, 5)
@@ -63,7 +61,6 @@ def test_operation_add():
 
 
 def test_operation_sub():
-
     left = np.random.randn(10, 5)
     right = np.random.randn(1, 5)
     activation_grad = np.random.randn(10, 5)
@@ -91,8 +88,7 @@ def test_operation_sub():
     assert right_diff < 1e-10
 
 
-def test_operation_sum():
-
+def test_operation_mean():
     data = np.random.randn(10, 5)
 
     data_minitensor = Tensor(data)
@@ -100,7 +96,41 @@ def test_operation_sum():
     data_tensor = torch.from_numpy(data).requires_grad_()
 
     for dim in [None, 0, 1]:
+        data_tensor.grad = None
+        mean_minitensor = data_minitensor.mean(dim)
+        mean_tensor = data_tensor.mean(dim)
+        mean_tensor.retain_grad()
+        diff = np.abs(
+            (mean_minitensor.data.squeeze() - mean_tensor.detach().numpy())
+        ).sum()
+        assert diff < 1e-10
 
+        if dim is None:
+            activation_grad = np.random.randn(1, 1)
+        elif dim == 0:
+            activation_grad = np.random.randn(1, data.shape[1])
+        elif dim == 1:
+            activation_grad = np.random.randn(data.shape[0], 1)
+        loss = (mean_tensor * torch.from_numpy(activation_grad).squeeze()).sum()
+        loss.backward()
+
+        mean_minitensor.grad = activation_grad
+        mean_minitensor.backward()
+
+        grad_diff = np.abs(
+            data_minitensor.grad.squeeze() - data_tensor.grad.numpy()
+        ).sum()
+        assert grad_diff < 1e-10
+
+
+def test_operation_sum():
+    data = np.random.randn(10, 5)
+
+    data_minitensor = Tensor(data)
+
+    data_tensor = torch.from_numpy(data).requires_grad_()
+
+    for dim in [None, 0, 1]:
         data_tensor.grad = None
         summed_minitensor = data_minitensor.sum(dim)
         summed_tensor = data_tensor.sum(dim)
@@ -125,3 +155,32 @@ def test_operation_sum():
             data_minitensor.grad.squeeze() - data_tensor.grad.numpy()
         ).sum()
         assert grad_diff < 1e-10
+
+
+def test_operation_square():
+    data = np.random.randn(10, 5)
+    activation_grad = np.random.randn(10, 5)
+
+    data_minitensor = Tensor(data)
+
+    data_tensor = torch.from_numpy(data).requires_grad_()
+
+    square_minitensor = data_minitensor.square()
+    square_tensor = data_tensor.square()
+    diff = np.abs(
+        (square_minitensor.data.squeeze() - square_tensor.detach().numpy())
+    ).sum()
+    assert diff < 1e-10
+
+    loss = (square_tensor * torch.from_numpy(activation_grad)).sum()
+    loss.backward()
+
+    square_minitensor.grad = activation_grad
+    square_minitensor.backward()
+
+    grad_diff = np.abs(data_minitensor.grad - data_tensor.grad.numpy()).sum()
+    assert grad_diff < 1e-10
+
+
+if __name__ == "__main__":
+    test_operation_mean()
