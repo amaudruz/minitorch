@@ -8,8 +8,8 @@ def test_operation_matmul():
     right = np.random.randn(5, 8)
     activation_grad = np.random.randn(10, 8)
 
-    left_minitensor = Tensor(left)
-    right_minitensor = Tensor(right)
+    left_minitensor = Tensor(left, retain_grad=True)
+    right_minitensor = Tensor(right, retain_grad=True)
 
     left_tensor = torch.from_numpy(left).requires_grad_()
     right_tensor = torch.from_numpy(right).requires_grad_()
@@ -23,8 +23,7 @@ def test_operation_matmul():
     loss = (result_tensor * torch.from_numpy(activation_grad)).sum()
     loss.backward()
 
-    result_minitensor.grad = activation_grad
-    result_minitensor.backward()
+    result_minitensor.backward(activation_grad)
 
     left_diff = np.abs(left_minitensor.grad - left_tensor.grad.numpy()).sum()
     right_diff = np.abs(right_minitensor.grad - right_tensor.grad.numpy()).sum()
@@ -37,8 +36,8 @@ def test_operation_add():
     right = np.random.randn(1, 5)
     activation_grad = np.random.randn(10, 5)
 
-    left_minitensor = Tensor(left)
-    right_minitensor = Tensor(right)
+    left_minitensor = Tensor(left, retain_grad=True)
+    right_minitensor = Tensor(right, retain_grad=True)
 
     left_tensor = torch.from_numpy(left).requires_grad_()
     right_tensor = torch.from_numpy(right).requires_grad_()
@@ -51,8 +50,7 @@ def test_operation_add():
     loss = (result_tensor * torch.from_numpy(activation_grad)).sum()
     loss.backward()
 
-    result_minitensor.grad = activation_grad
-    result_minitensor.backward()
+    result_minitensor.backward(activation_grad)
 
     left_diff = np.abs(left_minitensor.grad - left_tensor.grad.numpy()).sum()
     right_diff = np.abs(right_minitensor.grad - right_tensor.grad.numpy()).sum()
@@ -65,8 +63,8 @@ def test_operation_sub():
     right = np.random.randn(1, 5)
     activation_grad = np.random.randn(10, 5)
 
-    left_minitensor = Tensor(left)
-    right_minitensor = Tensor(right)
+    left_minitensor = Tensor(left, retain_grad=True)
+    right_minitensor = Tensor(right, retain_grad=True)
 
     left_tensor = torch.from_numpy(left).requires_grad_()
     right_tensor = torch.from_numpy(right).requires_grad_()
@@ -79,8 +77,7 @@ def test_operation_sub():
     loss = (result_tensor * torch.from_numpy(activation_grad)).sum()
     loss.backward()
 
-    result_minitensor.grad = activation_grad
-    result_minitensor.backward()
+    result_minitensor.backward(activation_grad)
 
     left_diff = np.abs(left_minitensor.grad - left_tensor.grad.numpy()).sum()
     right_diff = np.abs(right_minitensor.grad - right_tensor.grad.numpy()).sum()
@@ -91,12 +88,13 @@ def test_operation_sub():
 def test_operation_mean():
     data = np.random.randn(10, 5)
 
-    data_minitensor = Tensor(data)
+    data_minitensor = Tensor(data, retain_grad=True)
 
     data_tensor = torch.from_numpy(data).requires_grad_()
 
     for dim in [None, 0, 1]:
         data_tensor.grad = None
+        data_minitensor.grad = None
         mean_minitensor = data_minitensor.mean(dim)
         mean_tensor = data_tensor.mean(dim)
         mean_tensor.retain_grad()
@@ -114,8 +112,7 @@ def test_operation_mean():
         loss = (mean_tensor * torch.from_numpy(activation_grad).squeeze()).sum()
         loss.backward()
 
-        mean_minitensor.grad = activation_grad
-        mean_minitensor.backward()
+        mean_minitensor.backward(activation_grad)
 
         grad_diff = np.abs(
             data_minitensor.grad.squeeze() - data_tensor.grad.numpy()
@@ -126,12 +123,13 @@ def test_operation_mean():
 def test_operation_sum():
     data = np.random.randn(10, 5)
 
-    data_minitensor = Tensor(data)
+    data_minitensor = Tensor(data, retain_grad=True)
 
     data_tensor = torch.from_numpy(data).requires_grad_()
 
     for dim in [None, 0, 1]:
         data_tensor.grad = None
+        data_minitensor.grad = None
         summed_minitensor = data_minitensor.sum(dim)
         summed_tensor = data_tensor.sum(dim)
         diff = np.abs(
@@ -148,8 +146,7 @@ def test_operation_sum():
         loss = (summed_tensor * torch.from_numpy(activation_grad).squeeze()).sum()
         loss.backward()
 
-        summed_minitensor.grad = activation_grad
-        summed_minitensor.backward()
+        summed_minitensor.backward(activation_grad)
 
         grad_diff = np.abs(
             data_minitensor.grad.squeeze() - data_tensor.grad.numpy()
@@ -161,7 +158,7 @@ def test_operation_square():
     data = np.random.randn(10, 5)
     activation_grad = np.random.randn(10, 5)
 
-    data_minitensor = Tensor(data)
+    data_minitensor = Tensor(data, retain_grad=True)
 
     data_tensor = torch.from_numpy(data).requires_grad_()
 
@@ -175,8 +172,7 @@ def test_operation_square():
     loss = (square_tensor * torch.from_numpy(activation_grad)).sum()
     loss.backward()
 
-    square_minitensor.grad = activation_grad
-    square_minitensor.backward()
+    square_minitensor.backward(activation_grad)
 
     grad_diff = np.abs(data_minitensor.grad - data_tensor.grad.numpy()).sum()
     assert grad_diff < 1e-10
@@ -186,7 +182,7 @@ def test_operation_relu():
     data = np.random.randn(10, 5)
     activation_grad = np.random.randn(10, 5)
 
-    data_minitensor = Tensor(data)
+    data_minitensor = Tensor(data, retain_grad=True)
 
     data_tensor = torch.from_numpy(data).requires_grad_()
 
@@ -198,8 +194,33 @@ def test_operation_relu():
     loss = (relu_tensor * torch.from_numpy(activation_grad)).sum()
     loss.backward()
 
-    relu_minitensor.grad = activation_grad
-    relu_minitensor.backward()
+    relu_minitensor.backward(activation_grad)
 
     grad_diff = np.abs(data_minitensor.grad - data_tensor.grad.numpy()).sum()
     assert grad_diff < 1e-10
+
+
+def test_operation_two():
+    data = np.random.randn(10, 5)
+    activation_grad = np.random.randn(10, 5)
+
+    data_minitensor = Tensor(data, retain_grad=True)
+
+    data_tensor = torch.from_numpy(data).requires_grad_()
+
+    op_minitensor = data_minitensor + data_minitensor
+    op_tensor = data_tensor + data_tensor
+    diff = np.abs((op_minitensor.data.squeeze() - op_tensor.detach().numpy())).sum()
+    assert diff < 1e-10
+
+    loss = (op_tensor * torch.from_numpy(activation_grad)).sum()
+    loss.backward()
+
+    op_minitensor.backward(activation_grad)
+
+    grad_diff = np.abs(data_minitensor.grad - data_tensor.grad.numpy()).sum()
+    assert grad_diff < 1e-10
+
+
+if __name__ == "__main__":
+    test_operation_sum()

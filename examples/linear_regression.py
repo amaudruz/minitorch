@@ -35,8 +35,9 @@ if __name__ == "__main__":
             loss = (batch_predictions - batch_labels).square().mean()
             loss.backward()
 
-            for param in model._parameters.values():
+            for name, param in model.parameters:
                 param.data = param.data - (learning_rate * param.grad)
+                param.grad = None
 
             batch_losses.append(loss.data)
         print(np.mean(batch_losses))

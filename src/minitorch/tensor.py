@@ -3,18 +3,23 @@ from torch import relu
 
 
 class Tensor:
-    def __init__(self, data: np.ndarray, operator=None) -> None:
+    def __init__(
+        self, data: np.ndarray, operator=None, retain_grad: bool = False
+    ) -> None:
         self.data = data
         self.operator = operator
         self.grad: np.ndarray | None = None
+        self.retain_grad = retain_grad
 
-    def backward(self) -> None:
-        if all(dim_size == 1 for dim_size in self.shape) and (self.grad is None):
+    def backward(self, grad: np.ndarray | None = None) -> None:
+        if grad is None:
+            assert all(dim_size == 1 for dim_size in self.shape) and (self.grad is None)
             assert self.operator
             return self.operator.backward(np.ones((1, 1)))
-        assert self.grad is not None
+        if self.retain_grad:
+            self.grad = grad if self.grad is None else self.grad + grad
         if self.operator:
-            self.operator.backward(self.grad)
+            self.operator.backward(grad)
 
     @property
     def shape(self):

@@ -31,11 +31,8 @@ class MatMul(Operation):
             self.right is not None
         ), "Operation must be executed before calling backward on it"
 
-        self.right.grad = self.left.data.transpose() @ activation_grad
-        self.left.grad = activation_grad @ self.right.data.transpose()
-
-        self.right.backward()
-        self.left.backward()
+        self.right.backward(self.left.data.transpose() @ activation_grad)
+        self.left.backward(activation_grad @ self.right.data.transpose())
 
         self.a = None
         self.b = None
@@ -65,16 +62,16 @@ class TwoDimensionalAdd(Operation):
         left_broadcasting_dims = _get_2d_broadcasting_dims(self.left.data)
         right_broadcasting_dims = _get_2d_broadcasting_dims(self.right.data)
 
-        self.right.grad = activation_grad.copy()
+        right_grad = activation_grad.copy()
         for dim in right_broadcasting_dims:
-            self.right.grad = self.right.grad.sum(dim, keepdims=True)
+            right_grad = right_grad.sum(dim, keepdims=True)
 
-        self.left.grad = activation_grad.copy()
+        left_grad = activation_grad.copy()
         for dim in left_broadcasting_dims:
-            self.left.grad = self.left.grad.sum(dim, keepdims=True)
+            left_grad = left_grad.sum(dim, keepdims=True)
 
-        self.right.backward()
-        self.left.backward()
+        self.right.backward(right_grad)
+        self.left.backward(left_grad)
 
         self.a = None
         self.b = None
@@ -104,16 +101,16 @@ class TwoDimensionalSub(Operation):
         left_broadcasting_dims = _get_2d_broadcasting_dims(self.left.data)
         right_broadcasting_dims = _get_2d_broadcasting_dims(self.right.data)
 
-        self.right.grad = activation_grad.copy()
+        right_grad = activation_grad.copy()
         for dim in right_broadcasting_dims:
-            self.right.grad = -self.right.grad.sum(dim, keepdims=True)
+            right_grad = -right_grad.sum(dim, keepdims=True)
 
-        self.left.grad = activation_grad.copy()
+        left_grad = activation_grad.copy()
         for dim in left_broadcasting_dims:
-            self.left.grad = self.left.grad.sum(dim, keepdims=True)
+            left_grad = left_grad.sum(dim, keepdims=True)
 
-        self.right.backward()
-        self.left.backward()
+        self.right.backward(right_grad)
+        self.left.backward(left_grad)
 
         self.a = None
         self.b = None
@@ -144,8 +141,8 @@ class Mean(Operation):
         scale = (
             (self.tensor.data.size) if self.dim is None else self.tensor.shape[self.dim]
         )
-        self.tensor.grad = np.ones_like(self.tensor.data) * activation_grad / scale
-        self.tensor.backward()
+        grad = np.ones_like(self.tensor.data) * activation_grad / scale
+        self.tensor.backward(grad)
 
         self.tensor = None
 
@@ -172,8 +169,8 @@ class Sum(Operation):
         ), "Operation must be executed before calling backward on it"
         assert len(activation_grad.shape) == 2
 
-        self.tensor.grad = np.ones_like(self.tensor.data) * activation_grad
-        self.tensor.backward()
+        grad = np.ones_like(self.tensor.data) * activation_grad
+        self.tensor.backward(grad)
 
         self.tensor = None
 
@@ -191,8 +188,8 @@ class Square(Operation):
 
     def backward(self, activation_grad: np.ndarray) -> None:
         assert self.tensor is not None
-        self.tensor.grad = 2 * self.tensor.data * activation_grad
-        self.tensor.backward()
+        grad = 2 * self.tensor.data * activation_grad
+        self.tensor.backward(grad)
         self.tensor = None
 
 
@@ -209,6 +206,6 @@ class ReLU(Operation):
 
     def backward(self, activation_grad: np.ndarray) -> None:
         assert self.tensor is not None
-        self.tensor.grad = (self.tensor.data > 0) * activation_grad
-        self.tensor.backward()
+        grad = (self.tensor.data > 0) * activation_grad
+        self.tensor.backward(grad)
         self.tensor = None
