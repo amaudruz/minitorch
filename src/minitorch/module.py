@@ -41,7 +41,6 @@ class Linear(Module):
 
 
 class ReLU(Module):
-
     def __call__(self, input: Tensor) -> Tensor:
         return input.relu()
 

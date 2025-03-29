@@ -27,9 +27,9 @@ class MatMul(Operation):
         return Tensor(self.left.data @ self.right.data, self)
 
     def backward(self, activation_grad: np.ndarray) -> None:
-        assert (self.left is not None) and (
-            self.right is not None
-        ), "Operation must be executed before calling backward on it"
+        assert (self.left is not None) and (self.right is not None), (
+            "Operation must be executed before calling backward on it"
+        )
 
         self.right.backward(self.left.data.transpose() @ activation_grad)
         self.left.backward(activation_grad @ self.right.data.transpose())
@@ -52,9 +52,9 @@ class TwoDimensionalMul(Operation):
         return Tensor(self.left.data * self.right.data, self)
 
     def backward(self, activation_grad: np.ndarray) -> None:
-        assert (self.left is not None) and (
-            self.right is not None
-        ), "Operation must be executed before calling backward on it"
+        assert (self.left is not None) and (self.right is not None), (
+            "Operation must be executed before calling backward on it"
+        )
 
         def _get_2d_broadcasting_dims(array_2d: np.ndarray) -> list[int]:
             return [i for i in range(2) if array_2d.shape[i] == 1]
@@ -91,9 +91,9 @@ class TwoDimensionalAdd(Operation):
         return Tensor(self.left.data + self.right.data, self)
 
     def backward(self, activation_grad: np.ndarray) -> None:
-        assert (self.left is not None) and (
-            self.right is not None
-        ), "Operation must be executed before calling backward on it"
+        assert (self.left is not None) and (self.right is not None), (
+            "Operation must be executed before calling backward on it"
+        )
 
         def _get_2d_broadcasting_dims(array_2d: np.ndarray) -> list[int]:
             return [i for i in range(2) if array_2d.shape[i] == 1]
@@ -130,9 +130,9 @@ class TwoDimensionalSub(Operation):
         return Tensor(self.left.data - self.right.data, self)
 
     def backward(self, activation_grad: np.ndarray) -> None:
-        assert (self.left is not None) and (
-            self.right is not None
-        ), "Operation must be executed before calling backward on it"
+        assert (self.left is not None) and (self.right is not None), (
+            "Operation must be executed before calling backward on it"
+        )
 
         def _get_2d_broadcasting_dims(array_2d: np.ndarray) -> list[int]:
             return [i for i in range(2) if array_2d.shape[i] == 1]
@@ -172,9 +172,9 @@ class Mean(Operation):
         return Tensor(mean_data, self)
 
     def backward(self, activation_grad: np.ndarray) -> None:
-        assert (
-            self.tensor is not None
-        ), "Operation must be executed before calling backward on it"
+        assert self.tensor is not None, (
+            "Operation must be executed before calling backward on it"
+        )
         assert len(activation_grad.shape) == 2
 
         scale = (
@@ -203,9 +203,9 @@ class Sum(Operation):
         return Tensor(summed_data, self)
 
     def backward(self, activation_grad: np.ndarray) -> None:
-        assert (
-            self.tensor is not None
-        ), "Operation must be executed before calling backward on it"
+        assert self.tensor is not None, (
+            "Operation must be executed before calling backward on it"
+        )
         assert len(activation_grad.shape) == 2
 
         grad = np.ones_like(self.tensor.data) * activation_grad
