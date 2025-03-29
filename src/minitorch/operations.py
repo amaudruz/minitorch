@@ -34,9 +34,6 @@ class MatMul(Operation):
         self.right.backward(self.left.data.transpose() @ activation_grad)
         self.left.backward(activation_grad @ self.right.data.transpose())
 
-        self.a = None
-        self.b = None
-
 
 class TwoDimensionalDiv(Operation):
     def __init__(self) -> None:
@@ -77,9 +74,6 @@ class TwoDimensionalDiv(Operation):
         self.right.backward(right_grad)
         self.left.backward(left_grad)
 
-        self.a = None
-        self.b = None
-
 
 class TwoDimensionalMul(Operation):
     def __init__(self) -> None:
@@ -115,9 +109,6 @@ class TwoDimensionalMul(Operation):
 
         self.right.backward(right_grad)
         self.left.backward(left_grad)
-
-        self.a = None
-        self.b = None
 
 
 class TwoDimensionalAdd(Operation):
@@ -155,9 +146,6 @@ class TwoDimensionalAdd(Operation):
         self.right.backward(right_grad)
         self.left.backward(left_grad)
 
-        self.a = None
-        self.b = None
-
 
 class TwoDimensionalSub(Operation):
     def __init__(self) -> None:
@@ -194,9 +182,6 @@ class TwoDimensionalSub(Operation):
         self.right.backward(right_grad)
         self.left.backward(left_grad)
 
-        self.a = None
-        self.b = None
-
 
 class Mean(Operation):
     def __init__(self) -> None:
@@ -210,7 +195,7 @@ class Mean(Operation):
         mean_data = (
             self.tensor.data.mean(self.dim, keepdims=True)
             if self.dim is not None
-            else self.tensor.data.mean()
+            else self.tensor.data.mean(keepdims=True)
         )
         return Tensor(mean_data, self)
 
@@ -226,8 +211,6 @@ class Mean(Operation):
         grad = np.ones_like(self.tensor.data) * activation_grad / scale
         self.tensor.backward(grad)
 
-        self.tensor = None
-
 
 class Sum(Operation):
     def __init__(self) -> None:
@@ -241,7 +224,7 @@ class Sum(Operation):
         summed_data = (
             self.tensor.data.sum(self.dim, keepdims=True)
             if self.dim is not None
-            else self.tensor.data.sum()
+            else self.tensor.data.sum(keepdims=True)
         )
         return Tensor(summed_data, self)
 
@@ -253,8 +236,6 @@ class Sum(Operation):
 
         grad = np.ones_like(self.tensor.data) * activation_grad
         self.tensor.backward(grad)
-
-        self.tensor = None
 
 
 class Square(Operation):
@@ -272,7 +253,6 @@ class Square(Operation):
         assert self.tensor is not None
         grad = 2 * self.tensor.data * activation_grad
         self.tensor.backward(grad)
-        self.tensor = None
 
 
 class Exp(Operation):
@@ -290,7 +270,6 @@ class Exp(Operation):
         assert self.tensor is not None
         grad = np.exp(self.tensor.data) * activation_grad
         self.tensor.backward(grad)
-        self.tensor = None
 
 
 class Log(Operation):
@@ -308,7 +287,6 @@ class Log(Operation):
         assert self.tensor is not None
         grad = activation_grad / (self.tensor.data)
         self.tensor.backward(grad)
-        self.tensor = None
 
 
 class ReLU(Operation):
@@ -326,4 +304,3 @@ class ReLU(Operation):
         assert self.tensor is not None
         grad = (self.tensor.data > 0) * activation_grad
         self.tensor.backward(grad)
-        self.tensor = None

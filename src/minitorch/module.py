@@ -57,3 +57,15 @@ class Sequential(Module):
         for module in self.modules:
             output = module(output)
         return output
+
+
+class Softmax(Module):
+    def __init__(self, dim: int | None = None) -> None:
+        super().__init__()
+        self.dim = dim
+
+    def __call__(self, input: Tensor) -> tuple[Tensor, Tensor]:
+        logits = input.exp()
+        sum_exp = logits.sum(dim=self.dim)
+        normalized_logits = logits / sum_exp
+        return logits, normalized_logits
