@@ -38,6 +38,45 @@ class MatMul(Operation):
         self.b = None
 
 
+class TwoDimensionalMul(Operation):
+    def __init__(self) -> None:
+        self.left: Tensor | None = None
+        self.right: Tensor | None = None
+
+    def forward(self, *inputs) -> Tensor:
+        left, right = inputs
+        assert isinstance(left, Tensor) and len(left.data.shape) == 2
+        assert isinstance(right, Tensor) and len(right.data.shape) == 2
+
+        self.left, self.right = left, right
+        return Tensor(self.left.data * self.right.data, self)
+
+    def backward(self, activation_grad: np.ndarray) -> None:
+        assert (self.left is not None) and (
+            self.right is not None
+        ), "Operation must be executed before calling backward on it"
+
+        def _get_2d_broadcasting_dims(array_2d: np.ndarray) -> list[int]:
+            return [i for i in range(2) if array_2d.shape[i] == 1]
+
+        left_broadcasting_dims = _get_2d_broadcasting_dims(self.left.data)
+        right_broadcasting_dims = _get_2d_broadcasting_dims(self.right.data)
+
+        right_grad = self.left.data * activation_grad.copy()
+        for dim in right_broadcasting_dims:
+            right_grad = right_grad.sum(dim, keepdims=True)
+
+        left_grad = self.right.data * activation_grad.copy()
+        for dim in left_broadcasting_dims:
+            left_grad = left_grad.sum(dim, keepdims=True)
+
+        self.right.backward(right_grad)
+        self.left.backward(left_grad)
+
+        self.a = None
+        self.b = None
+
+
 class TwoDimensionalAdd(Operation):
     def __init__(self) -> None:
         self.left: Tensor | None = None

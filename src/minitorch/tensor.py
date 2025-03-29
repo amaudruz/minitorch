@@ -30,6 +30,11 @@ class Tensor:
 
         return MatMul().forward(self, other)
 
+    def __mul__(self, other: "Tensor") -> "Tensor":
+        from minitorch.operations import TwoDimensionalMul
+
+        return TwoDimensionalMul().forward(self, other)
+
     def __add__(self, other: "Tensor") -> "Tensor":
         from minitorch.operations import TwoDimensionalAdd
 
