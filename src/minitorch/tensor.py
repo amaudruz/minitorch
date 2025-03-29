@@ -35,6 +35,11 @@ class Tensor:
 
         return TwoDimensionalMul().forward(self, other)
 
+    def __truediv__(self, other: "Tensor") -> "Tensor":
+        from minitorch.operations import TwoDimensionalDiv
+
+        return TwoDimensionalDiv().forward(self, other)
+
     def __add__(self, other: "Tensor") -> "Tensor":
         from minitorch.operations import TwoDimensionalAdd
 

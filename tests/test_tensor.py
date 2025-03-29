@@ -58,6 +58,33 @@ def test_operation_mul():
     assert right_diff < 1e-10
 
 
+def test_operation_div():
+    left = np.random.randn(10, 5)
+    right = np.random.randn(1, 5)
+    activation_grad = np.random.randn(10, 5)
+
+    left_minitensor = Tensor(left, retain_grad=True)
+    right_minitensor = Tensor(right, retain_grad=True)
+
+    left_tensor = torch.from_numpy(left).requires_grad_()
+    right_tensor = torch.from_numpy(right).requires_grad_()
+
+    result_minitensor = left_minitensor / right_minitensor
+    result_tensor = left_tensor / right_tensor
+    diff = np.abs((result_minitensor.data - result_tensor.detach().numpy())).sum()
+    assert diff < 1e-10
+
+    loss = (result_tensor * torch.from_numpy(activation_grad)).sum()
+    loss.backward()
+
+    result_minitensor.backward(activation_grad)
+
+    left_diff = np.abs(left_minitensor.grad - left_tensor.grad.numpy()).sum()
+    right_diff = np.abs(right_minitensor.grad - right_tensor.grad.numpy()).sum()
+    assert left_diff < 1e-10
+    assert right_diff < 1e-10
+
+
 def test_operation_add():
     left = np.random.randn(10, 5)
     right = np.random.randn(1, 5)
@@ -250,4 +277,4 @@ def test_operation_two():
 
 
 if __name__ == "__main__":
-    test_operation_mul()
+    test_operation_div()
