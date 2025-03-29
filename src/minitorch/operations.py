@@ -263,6 +263,7 @@ class Exp(Operation):
         (tensor,) = inputs
         assert isinstance(tensor, Tensor)
         self.tensor = tensor
+        res = np.exp(self.tensor.data)
 
         return Tensor(np.exp(self.tensor.data), self)
 

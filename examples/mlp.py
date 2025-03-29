@@ -50,6 +50,7 @@ if __name__ == "__main__":
 
             for name, param in minitorch_model.parameters:
                 param.data = param.data - (learning_rate * param.grad)
+                param.grad = None
 
             batch_losses.append(loss.data)
         print(np.mean(batch_losses))

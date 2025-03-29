@@ -20,8 +20,8 @@ class Module:
         for name, param in self._parameters.items():
             yield name, param
         for name, module in self._modules.items():
-            for name, param in module.parameters:
-                yield f"{module}.{name}", param
+            for param_name, param in module.parameters:
+                yield f"{name}.{param_name}", param
 
     def __call__(self, *args, **kwargs) -> Tensor:
         raise NotImplemented
@@ -30,8 +30,20 @@ class Module:
 class Linear(Module):
     def __init__(self, in_features: int, out_features: int) -> None:
         super().__init__()
-        self.weight = Parameter(np.random.randn(in_features, out_features))
-        self.bias = Parameter(np.random.randn(1, out_features))
+        self.weight = Parameter(
+            np.random.uniform(
+                -1 / np.sqrt(in_features),
+                1 / np.sqrt(in_features),
+                size=(in_features, out_features),
+            )
+        )
+        self.bias = Parameter(
+            np.random.uniform(
+                -1 / np.sqrt(in_features),
+                1 / np.sqrt(in_features),
+                size=(1, out_features),
+            )
+        )
 
         self.register_parameter(self.weight, "weight")
         self.register_parameter(self.bias, "bias")
@@ -68,4 +80,4 @@ class Softmax(Module):
         logits = input.exp()
         sum_exp = logits.sum(dim=self.dim)
         normalized_logits = logits / sum_exp
-        return logits, normalized_logits
+        return input, normalized_logits

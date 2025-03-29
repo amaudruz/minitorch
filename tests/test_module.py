@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 from minitorch.tensor import Tensor
-from minitorch.module import Linear, Softmax
+from minitorch.module import Linear, Softmax, Sequential, ReLU
 from minitorch.utils import cross_entropy_loss
 from torch.nn import Linear as TLinear
 
@@ -82,5 +82,58 @@ def test_cross_entropy():
     assert grad_diff < 1e-6
 
 
+def get_torch_minitorch_same_linear(in_features, out_features):
+    model_torch = TLinear(in_features, out_features)
+    model_minitorch = Linear(in_features, out_features)
+
+    model_minitorch.weight.data = model_torch.weight.detach().numpy().transpose(1, 0)
+    model_minitorch.bias.data = model_torch.bias.detach().numpy()[None, ...]
+
+    return model_torch, model_minitorch
+
+
+def test_mlp_classification_end_to_end():
+    linear_1_torch, linear_1_minitorch = get_torch_minitorch_same_linear(728, 50)
+    linear_2_torch, linear_2_minitorch = get_torch_minitorch_same_linear(50, 10)
+
+    model_torch = torch.nn.Sequential(linear_1_torch, torch.nn.ReLU(), linear_2_torch)
+    model_minitorch = Sequential(
+        modules=[linear_1_minitorch, ReLU(), linear_2_minitorch]
+    )
+
+    batch_input = np.random.randn(32, 728)
+    batch_labels = np.random.randint(0, 10, size=(32))
+
+    batch_input_torch = torch.from_numpy(batch_input).float()
+    batch_input_minitorch = Tensor(batch_input)
+
+    batch_labels_torch = torch.from_numpy(batch_labels)
+    batch_labels_minitorch = list(batch_labels)
+
+    logits_torch = model_torch(batch_input_torch)
+    logits_minitorch = model_minitorch(batch_input_minitorch)
+
+    loss_torch = torch.nn.CrossEntropyLoss().forward(logits_torch, batch_labels_torch)
+    loss_minitorch = cross_entropy_loss(logits_minitorch, batch_labels_minitorch)
+
+    diff = np.abs((loss_torch.detach().numpy() - loss_minitorch.data)).sum()
+    assert diff < 1e-6
+
+    loss_torch.backward()
+    loss_minitorch.backward()
+
+    weight_grad_diff = np.abs(
+        (
+            linear_1_torch.weight.grad.detach().numpy().transpose(1, 0)
+            - linear_1_minitorch.weight.grad.data
+        )
+    ).mean()
+    assert weight_grad_diff < 1e-5
+    bias_grad_diff = np.abs(
+        (linear_1_torch.bias.grad.detach().numpy() - linear_1_minitorch.bias.grad.data)
+    ).mean()
+    assert bias_grad_diff < 1e-5
+
+
 if __name__ == "__main__":
-    test_cross_entropy()
+    test_mlp_classification_end_to_end()

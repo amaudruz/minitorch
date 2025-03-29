@@ -215,3 +215,4 @@ models_cache
 screen_recordings/*.mp3
 screen_recordings/*.mp4
 screen_recordings/*.wav
+*.npk
