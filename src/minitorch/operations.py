@@ -275,6 +275,42 @@ class Square(Operation):
         self.tensor = None
 
 
+class Exp(Operation):
+    def __init__(self) -> None:
+        self.tensor: Tensor | None = None
+
+    def forward(self, *inputs) -> Tensor:
+        (tensor,) = inputs
+        assert isinstance(tensor, Tensor)
+        self.tensor = tensor
+
+        return Tensor(np.exp(self.tensor.data), self)
+
+    def backward(self, activation_grad: np.ndarray) -> None:
+        assert self.tensor is not None
+        grad = np.exp(self.tensor.data) * activation_grad
+        self.tensor.backward(grad)
+        self.tensor = None
+
+
+class Log(Operation):
+    def __init__(self) -> None:
+        self.tensor: Tensor | None = None
+
+    def forward(self, *inputs) -> Tensor:
+        (tensor,) = inputs
+        assert isinstance(tensor, Tensor)
+        self.tensor = tensor
+
+        return Tensor(np.log(self.tensor.data), self)
+
+    def backward(self, activation_grad: np.ndarray) -> None:
+        assert self.tensor is not None
+        grad = activation_grad / (self.tensor.data)
+        self.tensor.backward(grad)
+        self.tensor = None
+
+
 class ReLU(Operation):
     def __init__(self) -> None:
         self.tensor: Tensor | None = None

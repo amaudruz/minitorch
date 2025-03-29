@@ -232,6 +232,54 @@ def test_operation_square():
     assert grad_diff < 1e-10
 
 
+def test_operation_exp():
+    data = np.random.randn(10, 5)
+    activation_grad = np.random.randn(10, 5)
+
+    data_minitensor = Tensor(data, retain_grad=True)
+
+    data_tensor = torch.from_numpy(data).requires_grad_()
+
+    square_minitensor = data_minitensor.exp()
+    square_tensor = data_tensor.exp()
+    diff = np.abs(
+        (square_minitensor.data.squeeze() - square_tensor.detach().numpy())
+    ).sum()
+    assert diff < 1e-10
+
+    loss = (square_tensor * torch.from_numpy(activation_grad)).sum()
+    loss.backward()
+
+    square_minitensor.backward(activation_grad)
+
+    grad_diff = np.abs(data_minitensor.grad - data_tensor.grad.numpy()).sum()
+    assert grad_diff < 1e-10
+
+
+def test_operation_log():
+    data = np.random.randn(10, 5) + 10
+    activation_grad = np.random.randn(10, 5)
+
+    data_minitensor = Tensor(data, retain_grad=True)
+
+    data_tensor = torch.from_numpy(data).requires_grad_()
+
+    square_minitensor = data_minitensor.log()
+    square_tensor = data_tensor.log()
+    diff = np.abs(
+        (square_minitensor.data.squeeze() - square_tensor.detach().numpy())
+    ).sum()
+    assert diff < 1e-10
+
+    loss = (square_tensor * torch.from_numpy(activation_grad)).sum()
+    loss.backward()
+
+    square_minitensor.backward(activation_grad)
+
+    grad_diff = np.abs(data_minitensor.grad - data_tensor.grad.numpy()).sum()
+    assert grad_diff < 1e-10
+
+
 def test_operation_relu():
     data = np.random.randn(10, 5)
     activation_grad = np.random.randn(10, 5)
@@ -277,4 +325,4 @@ def test_operation_two():
 
 
 if __name__ == "__main__":
-    test_operation_div()
+    test_operation_log()

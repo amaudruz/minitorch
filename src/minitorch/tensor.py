@@ -65,6 +65,16 @@ class Tensor:
 
         return Square().forward(self)
 
+    def exp(self) -> "Tensor":
+        from minitorch.operations import Exp
+
+        return Exp().forward(self)
+
+    def log(self) -> "Tensor":
+        from minitorch.operations import Log
+
+        return Log().forward(self)
+
     def relu(self) -> "Tensor":
         from minitorch.operations import ReLU
 
